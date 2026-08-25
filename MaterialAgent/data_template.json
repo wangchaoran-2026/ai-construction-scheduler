@@ -1,0 +1,26 @@
+{
+  "projects": [
+    {"id": "P001", "name": "示例项目", "short_name": "项目A", "location": "杭州市", "stage": "主体结构施工", "progress": 50, "manager": "张三", "workers": 100, "building_area": 100000, "type": "住宅"}
+  ],
+  "materials": [
+    {"id": "M001", "name": "C30混凝土", "unit": "m³", "safety_stock": 80, "weight_per_unit": 2.4, "est_price": 380, "plan_7d": 180, "plan_30d": 720, "plan_90d": 2000, "lead_time_days": 3, "loss_rate": 0.02, "category": "结构材料", "storage_condition": "搅拌站直供"}
+  ],
+  "inventory": [
+    {"project_id": "P001", "material_id": "M001", "current_stock": 35, "last_used_days": 2, "rotate_days": 3, "status": "normal", "batch_no": "B001", "received_date": "2024-01-01"}
+  ],
+  "suppliers": [
+    {"id": "S001", "name": "供应商A", "material_id": "M001", "price": 370, "market_price": 390, "on_time_rate": 0.98, "quality_rate": 0.99, "credit_score": 90, "violations": 0, "location": "杭州", "service_level": 0.95, "cooperation_years": 5, "green_certified": true, "capacity": "5000m³/月"}
+  ],
+  "transport_records": [
+    {"id": "T001", "date": "2024-01-01", "vehicle": "燃油货车", "distance_km": 200, "load_ton": 18, "status": "已完成"}
+  ],
+  "loss_records": [
+    {"id": "L001", "date": "2024-01-01", "project_id": "P001", "material_id": "M001", "quantity": 0.5, "reason": "正常损耗", "description": "", "loss_amount": 100}
+  ],
+  "alerts": [
+    {"id": "A001", "type": "库存预警", "level": "high", "title": "测试预警", "detail": "测试详情", "time": "10分钟前"}
+  ],
+  "change_logs": [
+    {"id": "C001", "time": "2024-01-01 00:00", "event": "测试变更", "reason": "测试", "adjustment": "测试", "confirm_by": "测试人"}
+  ]
+}

@@ -1,0 +1,220 @@
+{
+  "projects": [
+    {
+      "id": "P002",
+      "name": "杭州·滨江智造谷项目",
+      "short_name": "项目Y",
+      "location": "杭州市滨江区",
+      "stage": "砌筑工程",
+      "progress": 45,
+      "manager": "李工",
+      "workers": 120,
+      "building_area": 85000,
+      "type": "工业厂房"
+    }
+  ],
+  "materials": [
+    {
+      "id": "M003",
+      "name": "加气混凝土砌块",
+      "unit": "块",
+      "safety_stock": 3000,
+      "weight_per_unit": 0.01,
+      "est_price": 1.5,
+      "plan_7d": 2200,
+      "plan_30d": 9000,
+      "plan_90d": 26000,
+      "lead_time_days": 4,
+      "loss_rate": 0.03,
+      "category": "砌筑材料",
+      "storage_condition": "防雨棚"
+    },
+    {
+      "id": "M005",
+      "name": "42.5水泥",
+      "unit": "吨",
+      "safety_stock": 30,
+      "weight_per_unit": 1.0,
+      "est_price": 520,
+      "plan_7d": 45,
+      "plan_30d": 190,
+      "plan_90d": 560,
+      "lead_time_days": 3,
+      "loss_rate": 0.005,
+      "category": "胶凝材料",
+      "storage_condition": "防潮仓库"
+    }
+  ],
+  "inventory": [
+    {
+      "project_id": "P002",
+      "material_id": "M003",
+      "current_stock": 1200,
+      "last_used_days": 1,
+      "rotate_days": 4,
+      "status": "normal",
+      "batch_no": "B20240123-01",
+      "received_date": "2024-01-23"
+    },
+    {
+      "project_id": "P002",
+      "material_id": "M005",
+      "current_stock": 22,
+      "last_used_days": 8,
+      "rotate_days": 15,
+      "status": "warning",
+      "batch_no": "B20240115-04",
+      "received_date": "2024-01-15"
+    }
+  ],
+  "suppliers": [
+    {
+      "id": "S005",
+      "name": "浙江绿源建材科技",
+      "material_id": "M003",
+      "price": 1.48,
+      "market_price": 1.55,
+      "on_time_rate": 0.97,
+      "quality_rate": 0.99,
+      "credit_score": 95,
+      "violations": 0,
+      "location": "杭州·德清",
+      "service_level": 0.94,
+      "cooperation_years": 6,
+      "green_certified": true,
+      "capacity": "100000块/月"
+    },
+    {
+      "id": "S007",
+      "name": "浙江南方水泥集团",
+      "material_id": "M005",
+      "price": 515,
+      "market_price": 535,
+      "on_time_rate": 0.96,
+      "quality_rate": 0.99,
+      "credit_score": 91,
+      "violations": 0,
+      "location": "杭州·建德",
+      "service_level": 0.93,
+      "cooperation_years": 5,
+      "green_certified": true,
+      "capacity": "2000吨/月"
+    }
+  ],
+  "transport_records": [
+    {
+      "id": "T001",
+      "date": "2024-01-05",
+      "vehicle": "燃油货车",
+      "distance_km": 210,
+      "load_ton": 18,
+      "status": "已完成"
+    },
+    {
+      "id": "T002",
+      "date": "2024-01-08",
+      "vehicle": "新能源货车",
+      "distance_km": 160,
+      "load_ton": 14,
+      "status": "已完成"
+    },
+    {
+      "id": "T003",
+      "date": "2024-01-12",
+      "vehicle": "燃油货车",
+      "distance_km": 185,
+      "load_ton": 16,
+      "status": "已完成"
+    },
+    {
+      "id": "T004",
+      "date": "2024-01-15",
+      "vehicle": "新能源货车",
+      "distance_km": 230,
+      "load_ton": 13,
+      "status": "已完成"
+    },
+    {
+      "id": "T005",
+      "date": "2024-01-18",
+      "vehicle": "混合动力",
+      "distance_km": 195,
+      "load_ton": 17,
+      "status": "已完成"
+    },
+    {
+      "id": "T006",
+      "date": "2024-01-22",
+      "vehicle": "新能源货车",
+      "distance_km": 145,
+      "load_ton": 15,
+      "status": "运输中"
+    },
+    {
+      "id": "T007",
+      "date": "2024-01-25",
+      "vehicle": "燃油货车",
+      "distance_km": 200,
+      "load_ton": 19,
+      "status": "运输中"
+    },
+    {
+      "id": "T008",
+      "date": "2024-01-28",
+      "vehicle": "混合动力",
+      "distance_km": 175,
+      "load_ton": 12,
+      "status": "运输中"
+    }
+  ],
+  "loss_records": [
+    {
+      "id": "L003",
+      "date": "2024-01-14",
+      "project_id": "P002",
+      "material_id": "M003",
+      "quantity": 45,
+      "reason": "人为浪费",
+      "description": "搬运破损",
+      "loss_amount": 67.5
+    },
+    {
+      "id": "L004",
+      "date": "2024-01-20",
+      "project_id": "P002",
+      "material_id": "M005",
+      "quantity": 1.5,
+      "reason": "丢失损毁",
+      "description": "露天堆放，防护不到位",
+      "loss_amount": 780
+    }
+  ],
+  "alerts": [
+    {
+      "id": "A005",
+      "type": "损耗异常",
+      "level": "low",
+      "title": "项目Y砌块损耗偏高",
+      "detail": "本周砌块损耗率0.8%，高于正常水平0.3%",
+      "time": "5小时前"
+    },
+    {
+      "id": "A006",
+      "type": "施工变更",
+      "level": "medium",
+      "title": "项目Y砌筑工程提前",
+      "detail": "进度提前3天，需重新启动物料采购计划",
+      "time": "昨天"
+    }
+  ],
+  "change_logs": [
+    {
+      "id": "C001",
+      "time": "2024-01-28 09:32",
+      "event": "项目Y砌筑工程提前3天启动",
+      "reason": "施工进度优化，班组调配到位",
+      "adjustment": "砌块采购计划从1月28日提前至1月25日",
+      "confirm_by": "项目经理·李工"
+    }
+  ]
+}

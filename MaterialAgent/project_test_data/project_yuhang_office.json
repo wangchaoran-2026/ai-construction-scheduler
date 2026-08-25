@@ -1,0 +1,223 @@
+{
+  "projects": [
+    {
+      "id": "P003",
+      "name": "杭州·余杭科创园项目",
+      "short_name": "项目Z",
+      "location": "杭州市余杭区",
+      "stage": "基础施工",
+      "progress": 25,
+      "manager": "王工",
+      "workers": 98,
+      "building_area": 65000,
+      "type": "办公园区"
+    }
+  ],
+  "materials": [
+    {
+      "id": "M001",
+      "name": "C30商品混凝土",
+      "unit": "m³",
+      "safety_stock": 80,
+      "weight_per_unit": 2.4,
+      "est_price": 380,
+      "plan_7d": 180,
+      "plan_30d": 720,
+      "plan_90d": 2000,
+      "lead_time_days": 3,
+      "loss_rate": 0.02,
+      "category": "结构材料",
+      "storage_condition": "搅拌站直供"
+    },
+    {
+      "id": "M004",
+      "name": "HRB400螺纹钢",
+      "unit": "吨",
+      "safety_stock": 25,
+      "weight_per_unit": 1.0,
+      "est_price": 4200,
+      "plan_7d": 60,
+      "plan_30d": 260,
+      "plan_90d": 750,
+      "lead_time_days": 7,
+      "loss_rate": 0.015,
+      "category": "结构材料",
+      "storage_condition": "室内仓库"
+    }
+  ],
+  "inventory": [
+    {
+      "project_id": "P003",
+      "material_id": "M001",
+      "current_stock": 10,
+      "last_used_days": 0,
+      "rotate_days": 2,
+      "status": "warning",
+      "batch_no": "B20240127-01",
+      "received_date": "2024-01-27"
+    },
+    {
+      "project_id": "P003",
+      "material_id": "M004",
+      "current_stock": 8,
+      "last_used_days": 3,
+      "rotate_days": 7,
+      "status": "normal",
+      "batch_no": "B20240122-02",
+      "received_date": "2024-01-22"
+    }
+  ],
+  "suppliers": [
+    {
+      "id": "S001",
+      "name": "浙江建工建材有限公司",
+      "material_id": "M001",
+      "price": 380,
+      "market_price": 390,
+      "on_time_rate": 0.98,
+      "quality_rate": 0.996,
+      "credit_score": 92,
+      "violations": 0,
+      "location": "杭州·萧山",
+      "service_level": 0.95,
+      "cooperation_years": 5,
+      "green_certified": true,
+      "capacity": "5000m³/月"
+    },
+    {
+      "id": "S002",
+      "name": "杭州鼎盛混凝土公司",
+      "material_id": "M001",
+      "price": 370,
+      "market_price": 390,
+      "on_time_rate": 0.90,
+      "quality_rate": 0.96,
+      "credit_score": 82,
+      "violations": 1,
+      "location": "杭州·富阳",
+      "service_level": 0.85,
+      "cooperation_years": 3,
+      "green_certified": false,
+      "capacity": "3000m³/月"
+    },
+    {
+      "id": "S003",
+      "name": "浙江海天建设材料",
+      "material_id": "M001",
+      "price": 365,
+      "market_price": 390,
+      "on_time_rate": 0.85,
+      "quality_rate": 0.94,
+      "credit_score": 68,
+      "violations": 2,
+      "location": "杭州·临安",
+      "service_level": 0.75,
+      "cooperation_years": 2,
+      "green_certified": false,
+      "capacity": "2000m³/月"
+    },
+    {
+      "id": "S006",
+      "name": "杭州钢铁贸易有限公司",
+      "material_id": "M004",
+      "price": 4150,
+      "market_price": 4300,
+      "on_time_rate": 0.93,
+      "quality_rate": 0.97,
+      "credit_score": 86,
+      "violations": 1,
+      "location": "杭州·拱墅",
+      "service_level": 0.90,
+      "cooperation_years": 3,
+      "green_certified": false,
+      "capacity": "800吨/月"
+    }
+  ],
+  "transport_records": [
+    {
+      "id": "T001",
+      "date": "2024-01-05",
+      "vehicle": "燃油货车",
+      "distance_km": 210,
+      "load_ton": 18,
+      "status": "已完成"
+    },
+    {
+      "id": "T002",
+      "date": "2024-01-08",
+      "vehicle": "新能源货车",
+      "distance_km": 160,
+      "load_ton": 14,
+      "status": "已完成"
+    },
+    {
+      "id": "T003",
+      "date": "2024-01-12",
+      "vehicle": "燃油货车",
+      "distance_km": 185,
+      "load_ton": 16,
+      "status": "已完成"
+    },
+    {
+      "id": "T004",
+      "date": "2024-01-15",
+      "vehicle": "新能源货车",
+      "distance_km": 230,
+      "load_ton": 13,
+      "status": "已完成"
+    },
+    {
+      "id": "T005",
+      "date": "2024-01-18",
+      "vehicle": "混合动力",
+      "distance_km": 195,
+      "load_ton": 17,
+      "status": "已完成"
+    },
+    {
+      "id": "T006",
+      "date": "2024-01-22",
+      "vehicle": "新能源货车",
+      "distance_km": 145,
+      "load_ton": 15,
+      "status": "运输中"
+    },
+    {
+      "id": "T007",
+      "date": "2024-01-25",
+      "vehicle": "燃油货车",
+      "distance_km": 200,
+      "load_ton": 19,
+      "status": "运输中"
+    },
+    {
+      "id": "T008",
+      "date": "2024-01-28",
+      "vehicle": "混合动力",
+      "distance_km": 175,
+      "load_ton": 12,
+      "status": "运输中"
+    }
+  ],
+  "loss_records": [],
+  "alerts": [
+    {
+      "id": "A007",
+      "type": "库存预警",
+      "level": "high",
+      "title": "项目Z螺纹钢库存不足",
+      "detail": "当前库存8吨，安全库存25吨，需立即补货",
+      "time": "30分钟前"
+    }
+  ],
+  "change_logs": [
+    {
+      "id": "C004",
+      "time": "2024-01-28 10:00",
+      "event": "项目Z基础施工进度滞后",
+      "reason": "地质条件复杂，需加固处理",
+      "adjustment": "螺纹钢采购计划推迟2天，但需增加10吨储备",
+      "confirm_by": "项目经理·王工"
+    }
+  ]
+}

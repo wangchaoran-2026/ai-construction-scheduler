@@ -1,0 +1,193 @@
+{
+  "projects": [
+    {
+      "id": "P005",
+      "name": "宁波·鄞州商务中心项目",
+      "short_name": "项目V",
+      "location": "宁波市鄞州区",
+      "stage": "地基与基础工程",
+      "progress": 10,
+      "manager": "刘工",
+      "workers": 200,
+      "building_area": 150000,
+      "type": "商业综合体"
+    }
+  ],
+  "materials": [
+    {
+      "id": "M004",
+      "name": "HRB400螺纹钢",
+      "unit": "吨",
+      "safety_stock": 25,
+      "weight_per_unit": 1.0,
+      "est_price": 4200,
+      "plan_7d": 60,
+      "plan_30d": 260,
+      "plan_90d": 750,
+      "lead_time_days": 7,
+      "loss_rate": 0.015,
+      "category": "结构材料",
+      "storage_condition": "室内仓库"
+    },
+    {
+      "id": "M007",
+      "name": "碎石(5-25mm)",
+      "unit": "吨",
+      "safety_stock": 80,
+      "weight_per_unit": 1.0,
+      "est_price": 95,
+      "plan_7d": 150,
+      "plan_30d": 600,
+      "plan_90d": 1800,
+      "lead_time_days": 2,
+      "loss_rate": 0.02,
+      "category": "骨料",
+      "storage_condition": "露天堆场"
+    }
+  ],
+  "inventory": [
+    {
+      "project_id": "P005",
+      "material_id": "M004",
+      "current_stock": 12,
+      "last_used_days": 1,
+      "rotate_days": 5,
+      "status": "warning",
+      "batch_no": "B20240124-01",
+      "received_date": "2024-01-24"
+    },
+    {
+      "project_id": "P005",
+      "material_id": "M007",
+      "current_stock": 40,
+      "last_used_days": 2,
+      "rotate_days": 3,
+      "status": "normal",
+      "batch_no": "B20240125-02",
+      "received_date": "2024-01-25"
+    }
+  ],
+  "suppliers": [
+    {
+      "id": "S006",
+      "name": "杭州钢铁贸易有限公司",
+      "material_id": "M004",
+      "price": 4150,
+      "market_price": 4300,
+      "on_time_rate": 0.93,
+      "quality_rate": 0.97,
+      "credit_score": 86,
+      "violations": 1,
+      "location": "杭州·拱墅",
+      "service_level": 0.90,
+      "cooperation_years": 3,
+      "green_certified": false,
+      "capacity": "800吨/月"
+    },
+    {
+      "id": "S009",
+      "name": "嘉兴开源石料经营部",
+      "material_id": "M007",
+      "price": 90,
+      "market_price": 96,
+      "on_time_rate": 0.90,
+      "quality_rate": 0.94,
+      "credit_score": 78,
+      "violations": 1,
+      "location": "嘉兴·海盐",
+      "service_level": 0.80,
+      "cooperation_years": 2,
+      "green_certified": false,
+      "capacity": "3000吨/月"
+    }
+  ],
+  "transport_records": [
+    {
+      "id": "T001",
+      "date": "2024-01-05",
+      "vehicle": "燃油货车",
+      "distance_km": 210,
+      "load_ton": 18,
+      "status": "已完成"
+    },
+    {
+      "id": "T002",
+      "date": "2024-01-08",
+      "vehicle": "新能源货车",
+      "distance_km": 160,
+      "load_ton": 14,
+      "status": "已完成"
+    },
+    {
+      "id": "T003",
+      "date": "2024-01-12",
+      "vehicle": "燃油货车",
+      "distance_km": 185,
+      "load_ton": 16,
+      "status": "已完成"
+    },
+    {
+      "id": "T004",
+      "date": "2024-01-15",
+      "vehicle": "新能源货车",
+      "distance_km": 230,
+      "load_ton": 13,
+      "status": "已完成"
+    },
+    {
+      "id": "T005",
+      "date": "2024-01-18",
+      "vehicle": "混合动力",
+      "distance_km": 195,
+      "load_ton": 17,
+      "status": "已完成"
+    },
+    {
+      "id": "T006",
+      "date": "2024-01-22",
+      "vehicle": "新能源货车",
+      "distance_km": 145,
+      "load_ton": 15,
+      "status": "运输中"
+    },
+    {
+      "id": "T007",
+      "date": "2024-01-25",
+      "vehicle": "燃油货车",
+      "distance_km": 200,
+      "load_ton": 19,
+      "status": "运输中"
+    },
+    {
+      "id": "T008",
+      "date": "2024-01-28",
+      "vehicle": "混合动力",
+      "distance_km": 175,
+      "load_ton": 12,
+      "status": "运输中"
+    }
+  ],
+  "loss_records": [
+    {
+      "id": "L006",
+      "date": "2024-01-27",
+      "project_id": "P005",
+      "material_id": "M007",
+      "quantity": 2.5,
+      "reason": "人为浪费",
+      "description": "看管不力，被车辆带出场外",
+      "loss_amount": 237.5
+    }
+  ],
+  "alerts": [],
+  "change_logs": [
+    {
+      "id": "C005",
+      "time": "2024-01-27 16:30",
+      "event": "宁波项目新增砂石需求",
+      "reason": "设计变更，地下结构增加混凝土用量",
+      "adjustment": "中砂采购量增加50吨，碎石增加80吨",
+      "confirm_by": "采购部·李专员"
+    }
+  ]
+}

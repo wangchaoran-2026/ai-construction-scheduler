@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑工地物料全生命周期智能调度 AI 智能体</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #1a2332;
+            --bg-darker: #141b28;
+            --bg-content: #f1f5f9;
+            --bg-card: #ffffff;
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-lighter: #dbeafe;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 2px 8px rgba(0,0,0,0.06);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.1);
+            --radius: 10px;
+            --radius-sm: 6px;
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg-content); color: var(--text-primary); display: flex; height: 100vh; overflow: hidden; }
+
+        /* ===== 侧边栏 ===== */
+        .sidebar {
+            width: 220px; background: var(--bg-dark); color: white;
+            display: flex; flex-direction: column; flex-shrink: 0; z-index: 10;
+        }
+        .sidebar-header {
+            padding: 20px 18px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .sidebar-header .logo {
+            width: 36px; height: 36px; background: var(--warning);
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+        .sidebar-header h2 {
+            font-size: 14px; line-height: 1.3; font-weight: 600;
+            color: #fff;
+        }
+        .sidebar-header .subtitle {
+            font-size: 10px; color: var(--text-light); font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+        .sidebar-nav {
+            flex: 1; padding: 12px 10px; overflow-y: auto;
+        }
+        .sidebar-nav .nav-label {
+            font-size: 10px; color: var(--text-light); text-transform: uppercase;
+            letter-spacing: 1px; padding: 8px 10px 4px;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+            border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition);
+            color: #cbd5e1; font-size: 13px; margin-bottom: 2px;
+            border-left: 3px solid transparent;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .nav-item.active {
+            background: rgba(37,99,235,0.3); color: #fff;
+            border-left-color: var(--primary-light);
+            font-weight: 600;
+        }
+        .nav-item .nav-icon { font-size: 16px; width: 22px; text-align: center; }
+        .nav-item .nav-badge {
+            margin-left: auto; background: var(--danger); color: #fff;
+            font-size: 10px; padding: 2px 6px; border-radius: 10px;
+        }
+        .sidebar-footer {
+            padding: 14px 18px; border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 11px; color: var(--text-light);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .sidebar-footer .avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: var(--warning); color: var(--bg-dark);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 12px;
+        }
+
+        /* ===== 主区域 ===== */
+        .main-content {
+            flex: 1; display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        /* ===== 顶部栏 ===== */
+        .top-bar {
+            background: var(--bg-card); padding: 12px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 16px;
+            box-shadow: var(--shadow);
+        }
+        .top-bar .page-title {
+            font-size: 18px; font-weight: 700;
+            color: var(--text-primary);
+        }
+        .top-bar .page-subtitle {
+            font-size: 12px; color: var(--text-secondary);
+        }
+        .top-bar .project-selector {
+            margin-left: auto; display: flex; align-items: center; gap: 8px;
+        }
+        .top-bar select {
+            padding: 8px 14px; border: 1px solid var(--border);
+            border-radius: var(--radius-sm); font-size: 13px;
+            background: var(--bg-card); color: var(--text-primary);
+            cursor: pointer; outline: none;
+        }
+        .top-bar select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-lighter); }
+        .top-bar .top-time {
+            font-size: 12px; color: var(--text-secondary);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .top-bar .notification-btn {
+            position: relative; width: 36px; height: 36px;
+            border-radius: 50%; border: 1px solid var(--border);
+            background: var(--bg-card); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; transition: var(--transition);
+        }
+        .top-bar .notification-btn:hover { background: var(--bg-content); }
+        .top-bar .notification-btn .dot {
+            position: absolute; top: 4px; right: 4px;
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--danger); border: 2px solid var(--bg-card);
+        }
+
+        /* ===== 内容区 ===== */
+        .content-area {
+            flex: 1; padding: 20px 24px; overflow-y: auto;
+        }
+        .content-page { display: none; }
+        .content-page.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== 卡片 ===== */
+        .card {
+            background: var(--bg-card); border-radius: var(--radius);
+            box-shadow: var(--shadow); padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+        .card:hover { box-shadow: var(--shadow-lg); }
+        .card-title {
+            font-size: 14px; font-weight: 700; color: var(--text-primary);
+            margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+        }
+        .card-title .icon { font-size: 16px; }
+        .card .card-desc {
+            font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;
+        }
+
+        /* ===== KPI 卡片 ===== */
+        .kpi-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px; margin-bottom: 16px;
+        }
+        .kpi-card {
+            background: var(--bg-card); border-radius: var(--radius);
+            padding: 16px 18px; box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; gap: 14px;
+            transition: var(--transition);
+        }
+        .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+        .kpi-icon {
+            width: 44px; height: 44px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+        }
+        .kpi-icon.blue { background: var(--primary-lighter); }
+        .kpi-icon.green { background: var(--success-light); }
+        .kpi-icon.yellow { background: var(--warning-light); }
+        .kpi-icon.red { background: var(--danger-light); }
+        .kpi-icon.purple { background: #ede9fe; }
+        .kpi-icon.orange { background: #ffedd5; }
+        .kpi-info .kpi-value {
+            font-size: 22px; font-weight: 700; color: var(--text-primary);
+            line-height: 1.2;
+        }
+        .kpi-info .kpi-label {
+            font-size: 11px; color: var(--text-secondary);
+        }
+
+        /* ===== 表格 ===== */
+        .data-table {
+            width: 100%; border-collapse: collapse; font-size: 12px;
+        }
+        .data-table th {
+            background: #f8fafc; text-align: left; padding: 10px 12px;
+            font-weight: 600; color: var(--text-secondary);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+        .data-table td {
+            padding: 10px 12px; border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        .data-table tr:hover td { background: #f8fafc; }
+        .rank-badge {
+            padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;
+        }
+        .rank-badge.excellent { background: var(--success-light); color: #047857; }
+        .rank-badge.good { background: var(--primary-lighter); color: #1d4ed8; }
+        .rank-badge.watch { background: var(--warning-light); color: #b45309; }
+        .rank-badge.black { background: var(--danger-light); color: #b91c1c; }
+
+        .status-badge {
+            padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 600;
+        }
+        .status-badge.normal { background: var(--success-light); color: #047857; }
+        .status-badge.warning { background: var(--warning-light); color: #b45309; }
+        .status-badge.deadstock { background: var(--danger-light); color: #b91c1c; }
+        .status-badge.completed { background: var(--success-light); color: #047857; }
+        .status-badge.in-transit { background: var(--primary-lighter); color: #1d4ed8; }
+
+        .alert-badge {
+            padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 600;
+        }
+        .alert-badge.high { background: var(--danger-light); color: #b91c1c; }
+        .alert-badge.medium { background: var(--warning-light); color: #b45309; }
+        .alert-badge.low { background: var(--success-light); color: #047857; }
+
+        /* ===== 表单 ===== */
+        .form-row {
+            display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
+            margin-bottom: 14px;
+        }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label {
+            font-size: 11px; color: var(--text-secondary); font-weight: 600;
+        }
+        .form-group select, .form-group input {
+            padding: 8px 12px; border: 1px solid var(--border);
+            border-radius: var(--radius-sm); font-size: 13px;
+            background: var(--bg-card); color: var(--text-primary);
+            outline: none; min-width: 140px;
+        }
+        .form-group select:focus, .form-group input:focus {
+            border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-lighter);
+        }
+        .btn {
+            padding: 9px 18px; border: none; border-radius: var(--radius-sm);
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            transition: var(--transition); display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-primary); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-warning { background: var(--warning); color: #fff; }
+        .btn-warning:hover { background: #d97706; }
+
+        /* ===== 图表容器 ===== */
+        .chart-container {
+            width: 100%; height: 260px;
+        }
+        .chart-container.large { height: 360px; }
+        .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 768px) {
+            .chart-row { grid-template-columns: 1fr; }
+        }
+
+        /* ===== 方案卡片 ===== */
+        .plan-cards {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+            margin: 16px 0;
+        }
+        @media (max-width: 768px) {
+            .plan-cards { grid-template-columns: 1fr; }
+        }
+        .plan-card {
+            border: 2px solid var(--border); border-radius: var(--radius);
+            padding: 18px; text-align: center;
+            transition: var(--transition); cursor: pointer;
+        }
+        .plan-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+        .plan-card.recommended {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #dbeafe 100%);
+            box-shadow: 0 4px 16px rgba(37,99,235,0.2);
+            position: relative;
+        }
+        .plan-card.recommended::before {
+            content: "✓ 推荐";
+            position: absolute; top: -10px; right: 16px;
+            background: var(--primary); color: #fff;
+            font-size: 10px; font-weight: 700;
+            padding: 3px 10px; border-radius: 10px;
+        }
+        .plan-card .plan-name { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .plan-card .plan-metric { font-size: 20px; font-weight: 700; margin: 6px 0; }
+        .plan-card .plan-label { font-size: 10px; color: var(--text-secondary); }
+        .plan-card .plan-desc { font-size: 11px; color: var(--text-secondary); margin-top: 8px; }
+
+        /* ===== 预警列表 ===== */
+        .alert-list { list-style: none; }
+        .alert-item {
+            padding: 12px 14px; border-left: 3px solid var(--border);
+            margin-bottom: 8px; border-radius: var(--radius-sm);
+            background: #f8fafc; display: flex; gap: 10px; align-items: flex-start;
+        }
+        .alert-item.high { border-left-color: var(--danger); background: #fef2f2; }
+        .alert-item.medium { border-left-color: var(--warning); background: #fffbeb; }
+        .alert-item.low { border-left-color: var(--success); background: #f0fdf4; }
+        .alert-item .alert-title { font-size: 12px; font-weight: 700; }
+        .alert-item .alert-detail { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+        .alert-item .alert-time { font-size: 10px; color: var(--text-light); margin-left: auto; white-space: nowrap; }
+
+        /* ===== 时间线 ===== */
+        .timeline { position: relative; padding-left: 20px; }
+        .timeline::before {
+            content: ''; position: absolute; left: 6px; top: 4px; bottom: 4px;
+            width: 2px; background: var(--border);
+        }
+        .timeline-item {
+            position: relative; padding: 10px 0 10px 14px;
+        }
+        .timeline-item::before {
+            content: ''; position: absolute; left: -18px; top: 14px;
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--primary); border: 2px solid var(--bg-card);
+        }
+        .timeline-item .tl-time { font-size: 10px; color: var(--text-light); }
+        .timeline-item .tl-event { font-size: 12px; font-weight: 600; margin-top: 2px; }
+        .timeline-item .tl-detail { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+        /* ===== AI 助手 ===== */
+        .ai-fab {
+            position: fixed;
+            bottom: 100px;
+            right: 80px;
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            font-size: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(37,99,235,0.4);
+            transition: transform 0.3s, box-shadow 0.3s;
+            z-index: 1000;
+            user-select: none;
+        }
+        .ai-fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 28px rgba(37,99,235,0.5);
+        }
+        .ai-fab.dragging {
+            cursor: grabbing;
+            transform: scale(1);
+            box-shadow: 0 12px 32px rgba(37,99,235,0.6);
+        }
+
+        .ai-chat-panel {
+            position: fixed;
+            left: 300px;
+            top: 150px;
+            width: 380px;
+            height: 480px;
+            min-width: 300px;
+            min-height: 300px;
+            max-width: 90vw;
+            max-height: 80vh;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 999;
+            cursor: default;
+        }
+        .ai-chat-panel.active { display: flex; }
+        .ai-chat-header {
+            background: var(--primary);
+            color: #fff;
+            padding: 12px 16px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            touch-action: none;
+        }
+        .ai-chat-header .header-btns {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .ai-chat-header button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            line-height: 1;
+            padding: 0;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ai-chat-header button[title="关闭"] {
+            font-size: 26px;
+            transform: translateY(1.5px);
+        }
+        .ai-chat-header button:hover {
+            opacity: 0.8;
+        }
+        .ai-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            background: #f8fafc;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        .ai-message {
+            margin-bottom: 12px;
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 16px;
+            font-size: 13px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .ai-message.user {
+            background: var(--primary);
+            color: #fff;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        .ai-message.bot {
+            background: #e9ecef;
+            color: var(--text-primary);
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        .ai-message.ai-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+            max-width: 90%;
+            box-shadow: var(--shadow);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .ai-message.ai-card strong {
+            font-size: 14px;
+            color: var(--primary);
+        }
+        .ai-message.ai-card button {
+            margin-top: 8px;
+            padding: 4px 12px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .ai-quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .ai-quick-actions button {
+            padding: 4px 10px;
+            font-size: 11px;
+            background: var(--primary-lighter);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .ai-quick-actions button:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+        .ai-chat-input {
+            display: flex;
+            border-top: 1px solid var(--border);
+        }
+        .ai-chat-input input {
+            flex: 1;
+            padding: 10px 14px;
+            border: none;
+            outline: none;
+            font-size: 13px;
+        }
+        .ai-chat-input button {
+            padding: 10px 16px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .ai-resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            cursor: nwse-resize;
+            background: transparent;
+            z-index: 10;
+            touch-action: none;
+        }
+        .ai-resize-handle::before {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            right: 3px;
+            width: 10px;
+            height: 10px;
+            border-right: 2px solid #ccc;
+            border-bottom: 2px solid #ccc;
+            opacity: 0.5;
+        }
+        .ai-thinking-progress {
+            margin-top: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            height: 6px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .ai-thinking-progress .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+        .ai-thinking-status {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .ai-thinking-status .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--primary-lighter);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 1024px) {
+            .sidebar { width: 60px; }
+            .sidebar-header h2, .sidebar-header .subtitle,
+            .nav-item span:not(.nav-icon),
+            .nav-label { display: none; }
+            .nav-item { justify-content: center; }
+            .sidebar-footer span { display: none; }
+            .nav-item .nav-badge { display: none; }
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+
+        #debugNote {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: #333;
+            color: #fff;
+            padding: 5px 10px;
+            font-size: 11px;
+            border-radius: 4px;
+            z-index: 9999;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        /* ===== 数据导入样式 ===== */
+        .import-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 40px;
+            text-align: center;
+            background: #f8fafc;
+            margin-bottom: 20px;
+        }
+        .import-area:hover {
+            border-color: var(--primary);
+            background: #f0f7ff;
+        }
+        .import-area .icon { font-size: 48px; margin-bottom: 16px; }
+        .file-input { display: none; }
+        .import-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .template-link {
+            display: inline-block; margin-top: 12px;
+            font-size: 12px; color: var(--primary);
+            text-decoration: underline; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">🏗️</div>
+            <div>
+                <h2>物料调度 AI 智能体</h2>
+                <span class="subtitle">全生命周期智能管理</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-label">功能导航</div>
+            <div class="nav-item active" data-page="dashboard">
+                <span class="nav-icon">📊</span><span>驾驶舱</span>
+            </div>
+            <div class="nav-item" data-page="predict">
+                <span class="nav-icon">📈</span><span>需求预测</span>
+            </div>
+            <div class="nav-item" data-page="supplier">
+                <span class="nav-icon">🏆</span><span>供应商评估</span>
+            </div>
+            <div class="nav-item" data-page="transport">
+                <span class="nav-icon">🚚</span><span>物流调度</span>
+            </div>
+            <div class="nav-item" data-page="inventory">
+                <span class="nav-icon">📦</span><span>库存优化</span>
+            </div>
+            <div class="nav-item" data-page="loss">
+                <span class="nav-icon">🔍</span><span>损耗管理</span>
+            </div>
+            <div class="nav-item" data-page="changes">
+                <span class="nav-icon">🔄</span><span>动态调整</span>
+            </div>
+            <div class="nav-item" data-page="esg">
+                <span class="nav-icon">🌿</span><span>ESG 报告</span>
+            </div>
+            <div class="nav-item" data-page="import">
+                <span class="nav-icon">📥</span><span>数据导入</span>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="avatar">X</div>
+            <span>用户</span>
+        </div>
+    </aside>
+
+    <!-- 主区域 -->
+    <div class="main-content">
+        <header class="top-bar">
+            <div>
+                <div class="page-title" id="pageTitle">📊 智能驾驶舱</div>
+                <div class="page-subtitle" id="pageSubtitle">建筑工地物料全生命周期管理 · 实时监控</div>
+            </div>
+            <div class="project-selector">
+                <span style="font-size:12px;color:var(--text-secondary)">当前项目：</span>
+                <select id="globalProjectSelect">
+                    <option value="P001">杭州·西湖云锦 (项目X)</option>
+                    <option value="P002">杭州·滨江智造谷 (项目Y)</option>
+                    <option value="P003">杭州·余杭科创园 (项目Z)</option>
+                </select>
+            </div>
+            <div class="top-time" id="currentTime">2024-01-28 14:32</div>
+            <button class="notification-btn" id="notificationBtn">🔔<span class="dot"></span></button>
+        </header>
+
+        <main class="content-area">
+            <!-- 驾驶舱页面 -->
+            <div class="content-page active" id="page-dashboard">
+                <div class="kpi-grid" id="dashboardKPI"></div>
+                <div class="chart-row">
+                    <div class="card">
+                        <div class="card-title"><span class="icon">📊</span>近7日物料消耗趋势</div>
+                        <div class="chart-container" id="dashTrendChart"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title"><span class="icon">📦</span>各项目物料库存分布</div>
+                        <div class="chart-container" id="dashPieChart"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">⚠️</span>实时预警清单 <span style="font-size:11px;color:var(--text-light);font-weight:400">（系统自动扫描更新）</span></div>
+                    <ul class="alert-list" id="dashboardAlerts"></ul>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">🚨</span>物料短缺预警</div>
+                    <table class="data-table" id="shortageTable">
+                        <thead><tr><th>项目</th><th>物料</th><th>当前库存</th><th>安全库存</th><th>缺口状态</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 需求预测页面 -->
+            <div class="content-page" id="page-predict">
+                <div class="card">
+                    <div class="card-title"><span class="icon">📈</span>物料需求智能预测</div>
+                    <div class="card-desc">结合施工进度计划、当前库存和历史消耗数据，预测未来物料缺口并给出采购建议。</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>选择项目</label>
+                            <select id="predictProject"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>选择物料</label>
+                            <select id="predictMaterial"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>预测期限</label>
+                            <select id="predictDays">
+                                <option value="7">未来 7 天</option>
+                                <option value="30">未来 30 天</option>
+                                <option value="90">未来 90 天</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="runPredict()">🔮 开始预测</button>
+                    </div>
+                </div>
+                <div id="predictResult"></div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">📉</span>近15日消耗趋势</div>
+                    <div class="chart-container large" id="predictChart"></div>
+                </div>
+            </div>
+
+            <!-- 供应商评估页面 -->
+            <div class="content-page" id="page-supplier">
+                <div class="card">
+                    <div class="card-title"><span class="icon">🏆</span>供应商智能评估与采购辅助</div>
+                    <div class="card-desc">从价格、履约、质量、信用四个维度综合评估供应商，智能推荐最优采购组合。</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>选择物料</label>
+                            <select id="supplierMaterial"></select>
+                        </div>
+                        <button class="btn btn-primary" onclick="runSupplierEval()">📊 开始评估</button>
+                    </div>
+                </div>
+                <div id="supplierResult"></div>
+            </div>
+
+            <!-- 物流调度页面 -->
+            <div class="content-page" id="page-transport">
+                <div class="card">
+                    <div class="card-title"><span class="icon">🚚</span>多目标物流调度方案</div>
+                    <div class="card-desc">综合施工时效、运输成本、碳排放三个维度，自动生成多套调度方案对比。</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>选择物料</label>
+                            <select id="transportMaterial"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>运输量（吨）</label>
+                            <input type="number" id="transportQty" value="100" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>运输距离（km）</label>
+                            <input type="number" id="transportDist" value="200" min="10">
+                        </div>
+                        <button class="btn btn-primary" onclick="runTransportPlan()">🚀 生成方案</button>
+                    </div>
+                </div>
+                <div id="transportResult"></div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">📊</span>三方案成本/碳排放对比</div>
+                    <div class="chart-container large" id="transportChart"></div>
+                </div>
+            </div>
+
+            <!-- 库存优化页面 -->
+            <div class="content-page" id="page-inventory">
+                <div class="card">
+                    <div class="card-title"><span class="icon">📦</span>库存健康度总览</div>
+                    <div id="inventorySummary" class="kpi-grid" style="margin-bottom:0"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">📦</span>呆滞物料识别与盘活建议</div>
+                    <table class="data-table" id="deadstockTable">
+                        <thead><tr><th>项目</th><th>物料</th><th>数量</th><th>闲置天数</th><th>周转周期</th><th>占压资金(元)</th><th>状态</th><th>调拨建议</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">💡</span>JIT库存策略建议</div>
+                    <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+                        根据当前各项目施工进度和物料供应稳定性，建议：<br>
+                        ① 高周转物料（混凝土、砌块）安全库存可下调 15%，采用 JIT 准时制供货；<br>
+                        ② 低周转物料（盘扣钢管）设置 30 天呆滞预警线，超期自动提醒调拨；<br>
+                        ③ 建立集团级物料共享池，三个项目之间实现钢管、扣件等周转材共享调拨。
+                    </p>
+                </div>
+            </div>
+
+            <!-- 损耗管理页面 -->
+            <div class="content-page" id="page-loss">
+                <div class="card">
+                    <div class="card-title"><span class="icon">🔍</span>物料验收、领用与损耗管理</div>
+                    <div class="card-desc">全程留痕管理，智能区分正常损耗、人为浪费、丢失损毁，定位责任人和高损耗时段。</div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">📊</span>损耗原因分析</div>
+                    <div class="chart-row">
+                        <div class="chart-container" id="lossChart"></div>
+                        <div id="lossSummary" style="font-size:13px;line-height:1.8;color:var(--text-secondary);"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">📋</span>本周损耗记录</div>
+                    <table class="data-table" id="lossTable">
+                        <thead><tr><th>日期</th><th>项目</th><th>物料</th><th>数量</th><th>损耗类型</th><th>金额(元)</th><th>说明</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 动态调整页面 -->
+            <div class="content-page" id="page-changes">
+                <div class="card">
+                    <div class="card-title"><span class="icon">🔄</span>动态调整与闭环管理</div>
+                    <div class="card-desc">当施工进度变更、供应商异常、实际消耗偏差时，系统自动触发调整建议，全程留痕。</div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">📋</span>待处理调整事项</div>
+                    <table class="data-table" id="pendingTable">
+                        <thead><tr><th>事项</th><th>优先级</th><th>截止时间</th><th>操作</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">🕐</span>调整留痕时间线</div>
+                    <div class="timeline" id="changeTimeline"></div>
+                </div>
+            </div>
+
+            <!-- ESG报告页面 -->
+            <div class="content-page" id="page-esg">
+                <div class="kpi-grid" id="esgKPI"></div>
+                <div class="card" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 1px solid #10b981;">
+                    <div class="card-title" style="color: #047857;"><span class="icon">🌱</span>碳积分中心 · 绿色激励</div>
+                    <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 36px; font-weight: 700; color: #047857;">1,280</div>
+                            <div style="font-size: 12px; color: #047857;">累计碳积分</div>
+                        </div>
+                        <div style="flex:1; min-width:200px;">
+                            <div style="font-size: 12px; color: #047857; margin-bottom: 4px;">本月减排贡献</div>
+                            <div style="background: #fff; border-radius: 8px; padding: 10px; font-size: 12px; color: #047857;">
+                                ✅ 新能源运输 12 次　+360 分<br>
+                                ✅ 跨项目调拨 3 次　+250 分<br>
+                                ✅ 呆滞物料处置　+180 分
+                            </div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; font-weight: 700; color: #047857;">可兑换奖励</div>
+                            <div style="font-size: 12px; color: #059669;">🚚 新能源车优先使用权<br>📦 免费仓储 7 天<br>🏆 绿色供应商提名</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">📈</span>全年碳排放趋势与减排量</div>
+                    <div class="chart-container large" id="esgChart"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">💰</span>政策补贴匹配</div>
+                    <table class="data-table" id="subsidyTable">
+                        <thead><tr><th>补贴项目</th><th>金额(元)</th><th>状态</th><th>截止日期</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">🚚</span>运输碳排明细</div>
+                    <table class="data-table" id="carbonTable">
+                        <thead><tr><th>日期</th><th>车辆</th><th>距离(km)</th><th>载重(t)</th><th>碳排放(kg)</th><th>状态</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 数据导入页面 -->
+            <div class="content-page" id="page-import">
+                <div class="card">
+                    <div class="card-title"><span class="icon">📥</span>数据导入</div>
+                    <div class="card-desc">
+                        上传您的项目、物料、库存、供应商等数据，系统将自动替换当前演示数据，并基于您的数据进行智能决策。
+                        支持 JSON 完整数据包或单个类型的 CSV 文件。
+                    </div>
+                    <div class="import-area" id="dropZone">
+                        <div class="icon">📂</div>
+                        <p style="font-size:16px;font-weight:600;margin-bottom:8px">拖拽文件到此处，或点击下方按钮选择文件</p>
+                        <p style="font-size:12px;color:var(--text-secondary)">支持 .json（完整数据包）和 .csv（单表数据）</p>
+                        <div class="import-btns" style="margin-top:20px">
+                            <button class="btn btn-primary" onclick="document.getElementById('jsonFileInput').click()">
+                                📄 上传 JSON 数据包
+                            </button>
+                            <button class="btn btn-outline" onclick="document.getElementById('csvFileInput').click()">
+                                📊 上传 CSV 文件
+                            </button>
+                        </div>
+                        <input type="file" id="jsonFileInput" class="file-input" accept=".json" onchange="uploadJson(event)">
+                        <input type="file" id="csvFileInput" class="file-input" accept=".csv" onchange="uploadCsv(event)">
+                        <div style="margin-top:16px">
+                            <a class="template-link" onclick="downloadJsonTemplate()">📋 下载 JSON 模板</a>
+                            <span style="margin:0 10px;color:var(--text-light)">|</span>
+                            <a class="template-link" onclick="downloadCsvTemplate()">📋 下载 CSV 模板说明</a>
+                        </div>
+                    </div>
+                    <div id="importResult" style="margin-top:16px"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- AI 助手悬浮按钮 -->
+    <button class="ai-fab" id="aiFab" title="AI 智能助手">🤖</button>
+
+    <!-- AI 助手对话窗口 -->
+    <div class="ai-chat-panel" id="aiChatPanel">
+        <div class="ai-chat-header" id="aiChatHeader">
+            <span>🤖 AI 智能助手</span>
+            <div class="header-btns">
+                <button id="aiClearBtn" title="清除会话" onclick="clearAISession()" style="font-size:14px;">🗑️</button>
+                <button id="aiMaxBtn" title="最大化/还原">🗖</button>
+                <button id="aiMinBtn" title="最小化">–</button>
+                <button onclick="toggleAIChat()" title="关闭">×</button>
+            </div>
+        </div>
+        <div class="ai-chat-messages" id="aiMessages">
+            <div class="ai-message bot">
+                你好！我是物料调度 AI 助手，你可以问我：<br>
+                · “预测项目X未来7天混凝土需求”<br>
+                · “评估一下混凝土供应商”<br>
+                · “生成混凝土运输方案”<br>
+                <div class="ai-quick-actions">
+                    <button onclick="sendAIMessage('预测项目X未来7天混凝土需求')">📈 预测需求</button>
+                    <button onclick="sendAIMessage('评估混凝土供应商')">🏆 评估供应商</button>
+                    <button onclick="sendAIMessage('生成混凝土运输方案')">🚚 物流方案</button>
+                </div>
+            </div>
+        </div>
+        <div class="ai-chat-input">
+            <input type="text" id="aiInput" placeholder="输入你的问题..." onkeypress="if(event.key==='Enter') sendAIMessage()">
+            <button onclick="sendAIMessage()">发送</button>
+        </div>
+        <div class="ai-resize-handle" id="aiResizeHandle"></div>
+    </div>
+
+    <script>
+        // ==================== 全局变量 ====================
+        const PAGE_TITLES = {
+            dashboard: ['📊 智能驾驶舱', '建筑工地物料全生命周期管理 · 实时监控'],
+            predict: ['📈 物料需求预测', '结合施工进度与历史数据，预测物料缺口'],
+            supplier: ['🏆 供应商评估', '多维度量化评估，智能推荐优质供应商'],
+            transport: ['🚚 多目标物流调度', '成本 · 时效 · 碳排放 三维方案对比'],
+            inventory: ['📦 库存优化', '呆滞物料识别 · 跨项目调拨 · 资金盘活'],
+            loss: ['🔍 损耗管理', '验收 · 领用 · 退料 · 损耗全流程留痕'],
+            changes: ['🔄 动态调整', '异常自动触发 · 调整留痕 · 闭环优化'],
+            esg: ['🌿 ESG 报告', '碳足迹核算 · 减排量化 · 补贴匹配'],
+            import: ['📥 数据导入', '上传 CSV/JSON 文件更新系统数据'],
+        };
+
+        let currentPage = 'dashboard';
+        let charts = {};
+        let aiRequestInProgress = false;
+        let aiPanelInitialized = false;
+        let aiSessionId = localStorage.getItem('aiSessionId') || null; // 会话ID
+
+        // ==================== 更新调试提示条 ====================
+        function updateDebug(msg) {
+            const el = document.getElementById('debugNote');
+            if (el) el.textContent = msg;
+        }
+        updateDebug('✅ 脚本开始执行');
+
+        // ==================== 时间更新 ====================
+        function updateTime() {
+            const now = new Date();
+            const s = now.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+            document.getElementById('currentTime').textContent = s;
+        }
+        setInterval(updateTime, 60000);
+        updateTime();
+
+        // ==================== 导航切换 ====================
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const page = this.dataset.page;
+                switchPage(page);
+            });
+        });
+
+        function switchPage(page) {
+            currentPage = page;
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
+            document.querySelectorAll('.content-page').forEach(p => p.classList.remove('active'));
+            document.getElementById(`page-${page}`).classList.add('active');
+            const [title, subtitle] = PAGE_TITLES[page];
+            document.getElementById('pageTitle').textContent = title;
+            document.getElementById('pageSubtitle').textContent = subtitle;
+            switch(page) {
+                case 'dashboard': loadDashboard(); break;
+                case 'predict': loadPredictPage(); break;
+                case 'supplier': loadSupplierPage(); break;
+                case 'transport': loadTransportPage(); break;
+                case 'inventory': loadInventoryPage(); break;
+                case 'loss': loadLossPage(); break;
+                case 'changes': loadChangesPage(); break;
+                case 'esg': loadESGPage(); break;
+                case 'import': break;
+            }
+        }
+
+        // ==================== 通用 fetch（兼容旧版本，保留 options） ====================
+        async function apiFetch(url, options = {}) {
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.detail || res.statusText);
+                }
+                return await res.json();
+            } catch (e) {
+                console.error('API Error:', e);
+                return null;
+            }
+        }
+
+        // ==================== 驾驶舱 ====================
+        async function loadDashboard() {
+            const data = await apiFetch('/api/dashboard');
+            if (!data) return;
+            const kpi = data.kpi;
+            document.getElementById('dashboardKPI').innerHTML = `
+                <div class="kpi-card"><div class="kpi-icon red">🚨</div><div class="kpi-info"><div class="kpi-value">${kpi.shortage_count}</div><div class="kpi-label">物料短缺警报</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon blue">🏢</div><div class="kpi-info"><div class="kpi-value">${kpi.supplier_count}</div><div class="kpi-label">合作供应商</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon green">🚚</div><div class="kpi-info"><div class="kpi-value">${kpi.transport_count}</div><div class="kpi-label">运输订单</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon yellow">📦</div><div class="kpi-info"><div class="kpi-value">${kpi.deadstock_count}</div><div class="kpi-label">呆滞物料</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon orange">💰</div><div class="kpi-info"><div class="kpi-value">¥${(kpi.total_stock_value/10000).toFixed(1)}万</div><div class="kpi-label">库存总值</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon purple">⚠️</div><div class="kpi-info"><div class="kpi-value">${kpi.alert_count}</div><div class="kpi-label">高危预警</div></div></div>
+            `;
+            document.getElementById('dashboardAlerts').innerHTML = data.alerts.map(a => `
+                <li class="alert-item ${a.level}">
+                    <div>
+                        <div class="alert-title">${a.title}</div>
+                        <div class="alert-detail">${a.detail}</div>
+                    </div>
+                    <div class="alert-time">${a.time}</div>
+                </li>
+            `).join('');
+            document.querySelector('#shortageTable tbody').innerHTML = data.shortage_items.map(i => `
+                <tr><td>${i.project}</td><td>${i.material}</td><td>${i.current}${i.unit}</td><td>${i.safety}${i.unit}</td><td><span class="status-badge warning">缺口 ${i.safety - i.current}${i.unit}</span></td></tr>
+            `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-light)">暂无短缺</td></tr>';
+            renderChart('dashTrendChart', {
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['消耗量', '到货量'], bottom: 0 },
+                grid: { left: 40, right: 16, top: 20, bottom: 40 },
+                xAxis: { type: 'category', data: data.trend.map(t => t.date) },
+                yAxis: { type: 'value' },
+                series: [
+                    { name: '消耗量', type: 'line', smooth: true, data: data.trend.map(t => t.consumption), itemStyle: { color: '#2563eb' }, areaStyle: { opacity: 0.1 } },
+                    { name: '到货量', type: 'bar', data: data.trend.map(t => t.arrival), itemStyle: { color: '#f59e0b', borderRadius: [4,4,0,0] } }
+                ]
+            });
+            renderChart('dashPieChart', {
+                tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    data: data.material_dist.map(m => ({ name: m.name, value: m.value })),
+                    label: { fontSize: 10 }
+                }]
+            });
+        }
+
+        // ==================== 需求预测 ====================
+        async function loadPredictPage() {
+            const projects = await apiFetch('/api/projects');
+            const materials = await apiFetch('/api/materials');
+            document.getElementById('predictProject').innerHTML = projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            document.getElementById('predictMaterial').innerHTML = materials.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+            runPredict();
+        }
+
+        async function runPredict() {
+            const projectId = document.getElementById('predictProject').value;
+            const materialId = document.getElementById('predictMaterial').value;
+            const days = document.getElementById('predictDays').value;
+            const data = await apiFetch(`/api/predict?project_id=${projectId}&material_id=${materialId}&days=${days}`);
+            if (!data) return;
+            const gapStatus = data.status === 'shortage' ? 
+                '<span class="status-badge warning">存在缺口</span>' : 
+                '<span class="status-badge normal">库存充足</span>';
+            document.getElementById('predictResult').innerHTML = `
+                <div class="card" style="border-left:4px solid ${data.status==='shortage'?'var(--danger)':'var(--success)'}">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+                        <div>
+                            <h3 style="font-size:16px;margin-bottom:4px">${data.project.name} · ${data.material.name} 需求预测</h3>
+                            <p style="font-size:12px;color:var(--text-secondary)">预测期限：未来 ${days} 天 | 采购提前期：${data.lead_time_days} 天</p>
+                        </div>
+                        ${gapStatus}
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:16px">
+                        <div style="background:#f8fafc;padding:12px;border-radius:6px;text-align:center">
+                            <div style="font-size:22px;font-weight:700;color:var(--text-primary)">${data.current_stock}</div>
+                            <div style="font-size:10px;color:var(--text-secondary)">当前库存 (${data.material.unit})</div>
+                        </div>
+                        <div style="background:#f8fafc;padding:12px;border-radius:6px;text-align:center">
+                            <div style="font-size:22px;font-weight:700;color:var(--text-primary)">${data.safety_stock}</div>
+                            <div style="font-size:10px;color:var(--text-secondary)">安全库存 (${data.material.unit})</div>
+                        </div>
+                        <div style="background:#f8fafc;padding:12px;border-radius:6px;text-align:center">
+                            <div style="font-size:22px;font-weight:700;color:var(--text-primary)">${data.planned_usage}</div>
+                            <div style="font-size:10px;color:var(--text-secondary)">计划用量 (${data.material.unit})</div>
+                        </div>
+                        <div style="background:${data.gap>0?'#fef2f2':'#f0fdf4'};padding:12px;border-radius:6px;text-align:center">
+                            <div style="font-size:22px;font-weight:700;color:${data.gap>0?'var(--danger)':'var(--success)'}">${data.gap}</div>
+                            <div style="font-size:10px;color:var(--text-secondary)">物料缺口 (${data.material.unit})</div>
+                        </div>
+                    </div>
+                    <p style="margin-top:14px;font-size:13px;color:var(--text-primary);background:${data.gap>0?'#fef2f2':'#f0fdf4'};padding:10px 14px;border-radius:6px">
+                        💡 ${data.suggestion}
+                    </p>
+                </div>
+            `;
+            renderChart('predictChart', {
+                tooltip: { trigger: 'axis' },
+                grid: { left: 40, right: 16, top: 20, bottom: 30 },
+                xAxis: { type: 'category', data: data.history.map(h => h.date) },
+                yAxis: { type: 'value', name: '日消耗量' },
+                series: [{
+                    name: '日消耗量', type: 'line', smooth: true,
+                    data: data.history.map(h => h.usage),
+                    itemStyle: { color: '#2563eb' },
+                    areaStyle: { color: 'rgba(37,99,235,0.15)' }
+                }]
+            });
+        }
+
+        // ==================== 供应商评估 ====================
+        async function loadSupplierPage() {
+            const materials = await apiFetch('/api/materials');
+            document.getElementById('supplierMaterial').innerHTML = materials.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+            runSupplierEval();
+        }
+
+        async function runSupplierEval() {
+            const materialId = document.getElementById('supplierMaterial').value;
+            const data = await apiFetch(`/api/suppliers?material_id=${materialId}`);
+            if (!data) return;
+            document.getElementById('supplierResult').innerHTML = `
+                <div class="card">
+                    <div class="card-title"><span class="icon">📊</span>${data.material.name} · 供应商综合评分</div>
+                    <table class="data-table">
+                        <thead><tr><th>供应商</th><th>报价(元)</th><th>市场价</th><th>偏离度</th><th>价格分</th><th>履约分</th><th>质量分</th><th>信用分</th><th>综合评分</th><th>等级</th><th>风险信号</th></tr></thead>
+                        <tbody>
+                            ${data.suppliers.map(s => `
+                                <tr>
+                                    <td><strong>${s.name}</strong><br><span style="font-size:10px;color:var(--text-light)">${s.location}</span></td>
+                                    <td>${s.price}</td>
+                                    <td>${s.market_price}</td>
+                                    <td style="color:${s.price_deviation<-3?'var(--danger)':'var(--text-secondary)'}">${s.price_deviation}%</td>
+                                    <td>${s.price_score}</td>
+                                    <td>${s.perf_score}</td>
+                                    <td>${s.quality_score}</td>
+                                    <td>${s.credit_score}</td>
+                                    <td><strong style="font-size:14px">${s.total_score}</strong></td>
+                                    <td><span class="rank-badge ${s.rank==='优质'?'excellent':s.rank==='合格'?'good':s.rank==='观察'?'watch':'black'}">${s.rank}</span></td>
+                                    <td>${s.risk_signals.length>0?s.risk_signals.map(r=>`<span class="alert-badge medium">${r}</span>`).join(' '):'<span style="color:var(--text-light)">无</span>'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div style="margin-top:14px;padding:12px 14px;background:var(--primary-lighter);border-radius:6px">
+                        <strong>🎯 推荐供应商：${data.best.name}</strong>（综合评分 ${data.best.total_score} 分，${data.best.rank}等级）
+                    </div>
+                    ${data.note?`<div style="margin-top:8px;padding:12px 14px;background:var(--warning-light);border-radius:6px;font-size:12px">⚠️ ${data.note}</div>`:''}
+                </div>
+            `;
+        }
+
+        // ==================== 物流调度 ====================
+        async function loadTransportPage() {
+            const materials = await apiFetch('/api/materials');
+            document.getElementById('transportMaterial').innerHTML = materials.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+            runTransportPlan();
+        }
+
+        async function runTransportPlan() {
+            const materialId = document.getElementById('transportMaterial').value;
+            const qty = document.getElementById('transportQty').value || 100;
+            const dist = document.getElementById('transportDist').value || 200;
+            const data = await apiFetch(`/api/transport?material_id=${materialId}&quantity_ton=${qty}&distance_km=${dist}`);
+            if (!data) return;
+            document.getElementById('transportResult').innerHTML = `
+                <div class="card">
+                    <div class="card-title"><span class="icon">🚚</span>${data.material.name} · 多目标调度方案对比</div>
+                    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">运输量：${data.quantity_ton} 吨 | 距离：${data.distance_km} km</p>
+                    <div class="plan-cards">
+                        ${data.plans.map(p => {
+                            const vehicles = p.vehicle_type || p.vehicles || '';
+                            const totalTime = p.total_time !== undefined ? p.total_time : p.time;
+                            return `
+                            <div class="plan-card ${p.recommended?'recommended':''}" style="border-color:${p.color}">
+                                <div class="plan-name">${p.name}</div>
+                                <div style="font-size:11px;color:var(--text-light)">${vehicles} × ${p.vehicle_count}辆</div>
+                                <div class="plan-metric" style="color:${p.color}">¥${p.cost.toLocaleString()}</div>
+                                <div class="plan-label">运输成本</div>
+                                <div style="display:flex;justify-content:center;gap:16px;margin-top:10px">
+                                    <div><strong>${p.carbon}</strong><br><span style="font-size:10px;color:var(--text-secondary)">碳排放(kg)</span></div>
+                                    <div><strong>${totalTime}</strong><br><span style="font-size:10px;color:var(--text-secondary)">时效(h)</span></div>
+                                </div>
+                                <div class="plan-desc">${p.desc}</div>
+                            </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+            renderChart('transportChart', {
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['成本(元)', '碳排放(kg)'], bottom: 0 },
+                grid: { left: 50, right: 16, top: 20, bottom: 40 },
+                xAxis: { type: 'category', data: data.plans.map(p => p.name.replace('方案','')) },
+                yAxis: [
+                    { type: 'value', name: '成本(元)' },
+                    { type: 'value', name: '碳排放(kg)' }
+                ],
+                series: [
+                    { name: '成本(元)', type: 'bar', data: data.plans.map(p => p.cost), itemStyle: { color: '#2563eb', borderRadius: [4,4,0,0] } },
+                    { name: '碳排放(kg)', type: 'line', yAxisIndex: 1, data: data.plans.map(p => p.carbon), itemStyle: { color: '#10b981' } }
+                ]
+            });
+        }
+
+        // ==================== 库存优化 ====================
+        async function loadInventoryPage() {
+            const data = await apiFetch('/api/inventory');
+            if (!data) return;
+            document.getElementById('inventorySummary').innerHTML = `
+                <div class="kpi-card"><div class="kpi-icon green">✅</div><div class="kpi-info"><div class="kpi-value">${data.healthy_count}</div><div class="kpi-label">健康物料</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon yellow">⚠️</div><div class="kpi-info"><div class="kpi-value">${data.warning.length}</div><div class="kpi-label">预警物料</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon red">🚨</div><div class="kpi-info"><div class="kpi-value">${data.deadstock.length}</div><div class="kpi-label">呆滞物料</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon orange">💰</div><div class="kpi-info"><div class="kpi-value">¥${(data.total_stock_value/10000).toFixed(2)}万</div><div class="kpi-label">库存总值</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon purple">📊</div><div class="kpi-info"><div class="kpi-value">${data.deadstock_ratio}%</div><div class="kpi-label">呆滞占比</div></div></div>
+            `;
+            const allItems = [...data.deadstock, ...data.warning];
+            document.querySelector('#deadstockTable tbody').innerHTML = allItems.map(item => `
+                <tr>
+                    <td>${item.project_name}</td>
+                    <td>${item.material_name}</td>
+                    <td>${item.quantity}${item.unit}</td>
+                    <td style="color:${item.days_idle>30?'var(--danger)':'var(--warning)'}">${item.days_idle}天</td>
+                    <td>${item.rotate_days}天</td>
+                    <td>¥${item.est_value.toLocaleString()}</td>
+                    <td><span class="status-badge ${item.status==='deadstock'?'deadstock':'warning'}">${item.status==='deadstock'?'呆滞':'预警'}</span></td>
+                    <td>
+                        ${item.transfer_to.length > 0 
+                            ? item.transfer_to.map(t => {
+                                const name = t.project_name || t;
+                                return `<span class="status-badge normal">调拨至${name}</span>`;
+                            }).join(' ')
+                            : '<span style="color:var(--text-light)">建议折价出售</span>'}
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-light)">暂无呆滞或预警物料</td></tr>';
+        }
+
+        // ==================== 损耗管理 ====================
+        async function loadLossPage() {
+            const data = await apiFetch('/api/loss');
+            if (!data) return;
+            document.querySelector('#lossTable tbody').innerHTML = data.records.map(r => `
+                <tr>
+                    <td>${r.date}</td>
+                    <td>${r.project_name}</td>
+                    <td>${r.material_name}</td>
+                    <td>${r.quantity}${r.unit}</td>
+                    <td><span class="status-badge ${r.reason==='正常损耗'?'normal':'warning'}">${r.reason}</span></td>
+                    <td>¥${r.loss_amount}</td>
+                    <td style="font-size:11px;color:var(--text-secondary)">${r.description}</td>
+                </tr>
+            `).join('');
+            document.getElementById('lossSummary').innerHTML = `
+                <strong>📊 损耗分析汇总</strong><br>
+                总损耗金额：<strong style="color:var(--danger)">¥${data.total_loss_amount}</strong><br>
+                ${Object.entries(data.reason_stats).map(([reason, stat]) => 
+                    `<span style="color:var(--text-secondary)">${reason}：</span>${stat.count}起，¥${stat.amount}<br>`
+                ).join('')}
+                <br>⚠️ <strong>高损耗时段：</strong>${data.high_risk_time}<br>
+                <span style="color:var(--text-secondary)">${data.suggestion}</span>
+            `;
+            renderChart('lossChart', {
+                tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                series: [{
+                    type: 'pie',
+                    radius: ['35%', '65%'],
+                    data: Object.entries(data.reason_stats).map(([name, stat]) => ({ name, value: stat.amount })),
+                    label: { fontSize: 11 }
+                }]
+            });
+        }
+
+        // ==================== 动态调整 ====================
+        async function loadChangesPage() {
+            const data = await apiFetch('/api/changes');
+            if (!data) return;
+            document.querySelector('#pendingTable tbody').innerHTML = data.pending_actions.map(a => `
+                <tr>
+                    <td>${a.title}</td>
+                    <td><span class="alert-badge ${a.priority}">${a.priority==='high'?'紧急':'普通'}</span></td>
+                    <td>${a.deadline}</td>
+                    <td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">查看详情</button> <button class="btn btn-primary" style="padding:4px 10px;font-size:11px">确认</button></td>
+                </tr>
+            `).join('');
+            document.getElementById('changeTimeline').innerHTML = data.records.map(r => `
+                <div class="timeline-item">
+                    <div class="tl-time">${r.time}</div>
+                    <div class="tl-event">${r.event}</div>
+                    <div class="tl-detail">原因：${r.reason} | 调整：${r.adjustment} | 确认人：${r.confirm_by}</div>
+                </div>
+            `).join('');
+        }
+
+        // ==================== ESG报告 ====================
+        async function loadESGPage() {
+            const data = await apiFetch('/api/esg');
+            if (!data) return;
+            document.getElementById('esgKPI').innerHTML = `
+                <div class="kpi-card"><div class="kpi-icon green">🌿</div><div class="kpi-info"><div class="kpi-value">${data.total_carbon}kg</div><div class="kpi-label">运输总碳排放</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon blue">📉</div><div class="kpi-info"><div class="kpi-value">${data.reduction}kg</div><div class="kpi-label">减排量</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon purple">📊</div><div class="kpi-info"><div class="kpi-value">${data.reduction_ratio}%</div><div class="kpi-label">减排比例</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon orange">💰</div><div class="kpi-info"><div class="kpi-value">¥${data.carbon_value}</div><div class="kpi-label">碳资产价值</div></div></div>
+            `;
+            document.querySelector('#subsidyTable tbody').innerHTML = data.subsidies.map(s => `
+                <tr>
+                    <td>${s.name}</td>
+                    <td>¥${s.amount.toLocaleString()}</td>
+                    <td><span class="status-badge ${s.status==='可申领'?'normal':'warning'}">${s.status}</span></td>
+                    <td>${s.deadline}</td>
+                </tr>
+            `).join('');
+            document.querySelector('#carbonTable tbody').innerHTML = data.transport_records.map(r => {
+                const factor = r.vehicle === '燃油货车' ? 0.18 : r.vehicle === '新能源货车' ? 0.05 : 0.11;
+                const carbon = (r.distance_km * factor * r.load_ton).toFixed(2);
+                return `<tr>
+                    <td>${r.date}</td>
+                    <td>${r.vehicle}</td>
+                    <td>${r.distance_km}</td>
+                    <td>${r.load_ton}</td>
+                    <td>${carbon}</td>
+                    <td><span class="status-badge ${r.status==='已完成'?'completed':'in-transit'}">${r.status}</span></td>
+                </tr>`;
+            }).join('');
+            renderChart('esgChart', {
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['碳排放(kg)', '减排量(kg)'], bottom: 0 },
+                grid: { left: 40, right: 16, top: 20, bottom: 40 },
+                xAxis: { type: 'category', data: data.monthly_data.map(d => d.month) },
+                yAxis: { type: 'value' },
+                series: [
+                    { name: '碳排放(kg)', type: 'bar', data: data.monthly_data.map(d => d.carbon), itemStyle: { color: '#ef4444', borderRadius: [4,4,0,0] } },
+                    { name: '减排量(kg)', type: 'line', smooth: true, data: data.monthly_data.map(d => d.reduction), itemStyle: { color: '#10b981' }, areaStyle: { opacity: 0.1 } }
+                ]
+            });
+        }
+
+        // ==================== 数据导入功能 ====================
+        async function uploadJson(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
+                    const res = await fetch('/api/import/json', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(jsonData)
+                    });
+                    const result = await res.json();
+                    showImportResult(result, res.ok);
+                    if (res.ok) await refreshAllData();
+                } catch (err) {
+                    showImportResult({success: false, message: `JSON 解析失败: ${err.message}`}, false);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        async function uploadCsv(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const fileName = file.name.toLowerCase();
+            let dataType = null;
+            if (fileName.includes('project')) dataType = 'projects';
+            else if (fileName.includes('material')) dataType = 'materials';
+            else if (fileName.includes('inventory')) dataType = 'inventory';
+            else if (fileName.includes('supplier')) dataType = 'suppliers';
+            else if (fileName.includes('transport')) dataType = 'transport_records';
+            else if (fileName.includes('loss')) dataType = 'loss_records';
+            else if (fileName.includes('alert')) dataType = 'alerts';
+            else if (fileName.includes('change')) dataType = 'change_logs';
+            if (!dataType) {
+                alert('无法从文件名判断数据类型，请将文件命名为包含 projects, materials, inventory, suppliers, transport_records, loss_records, alerts, change_logs 的名称。');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('data_type', dataType);
+            try {
+                const res = await fetch('/api/import/csv', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await res.json();
+                showImportResult(result, res.ok);
+                if (res.ok) await refreshAllData();
+            } catch (err) {
+                showImportResult({success: false, message: `上传失败: ${err.message}`}, false);
+            }
+        }
+
+        function showImportResult(result, isSuccess) {
+            const div = document.getElementById('importResult');
+            if (isSuccess) {
+                div.innerHTML = `<div style="padding:12px;background:var(--success-light);border-radius:6px;color:#047857">✅ ${result.message}</div>`;
+            } else {
+                div.innerHTML = `<div style="padding:12px;background:var(--danger-light);border-radius:6px;color:#b91c1c">❌ ${result.message || result.detail || '导入失败'}</div>`;
+            }
+        }
+
+        async function refreshAllData() {
+            const projects = await apiFetch('/api/projects');
+            if (projects) {
+                const select = document.getElementById('globalProjectSelect');
+                select.innerHTML = projects.map(p => `<option value="${p.id}">${p.name} (${p.short_name})</option>`).join('');
+            }
+            if (currentPage === 'dashboard') loadDashboard();
+            else if (currentPage === 'predict') loadPredictPage();
+            else if (currentPage === 'supplier') loadSupplierPage();
+            else if (currentPage === 'transport') loadTransportPage();
+            else if (currentPage === 'inventory') loadInventoryPage();
+            else if (currentPage === 'loss') loadLossPage();
+            else if (currentPage === 'changes') loadChangesPage();
+            else if (currentPage === 'esg') loadESGPage();
+        }
+
+        function downloadJsonTemplate() {
+            const template = {
+                projects: [
+                    {"id":"P001","name":"示例项目","short_name":"项目A","location":"杭州市","stage":"主体结构施工","progress":50,"manager":"张三","workers":100,"building_area":100000,"type":"住宅"}
+                ],
+                materials: [
+                    {"id":"M001","name":"C30混凝土","unit":"m³","safety_stock":80,"weight_per_unit":2.4,"est_price":380,"plan_7d":180,"plan_30d":720,"plan_90d":2000,"lead_time_days":3,"loss_rate":0.02,"category":"结构材料","storage_condition":"搅拌站直供"}
+                ],
+                inventory: [
+                    {"project_id":"P001","material_id":"M001","current_stock":35,"last_used_days":2,"rotate_days":3,"status":"normal","batch_no":"B001","received_date":"2024-01-01"}
+                ],
+                suppliers: [
+                    {"id":"S001","name":"供应商A","material_id":"M001","price":370,"market_price":390,"on_time_rate":0.98,"quality_rate":0.99,"credit_score":90,"violations":0,"location":"杭州","service_level":0.95,"cooperation_years":5,"green_certified":true,"capacity":"5000m³/月"}
+                ],
+                transport_records: [
+                    {"id":"T001","date":"2024-01-01","vehicle":"燃油货车","distance_km":200,"load_ton":18,"status":"已完成"}
+                ],
+                loss_records: [
+                    {"id":"L001","date":"2024-01-01","project_id":"P001","material_id":"M001","quantity":0.5,"reason":"正常损耗","description":"","loss_amount":100}
+                ],
+                alerts: [
+                    {"id":"A001","type":"库存预警","level":"high","title":"测试预警","detail":"测试详情","time":"10分钟前"}
+                ],
+                change_logs: [
+                    {"id":"C001","time":"2024-01-01 00:00","event":"测试变更","reason":"测试","adjustment":"测试","confirm_by":"测试人"}
+                ]
+            };
+            downloadFile(JSON.stringify(template, null, 2), 'data_template.json', 'application/json');
+        }
+
+        function downloadCsvTemplate() {
+            const csvContent = "data_type,文件名示例,说明\nprojects,projects.csv,项目表\nmaterials,materials.csv,物料表\ninventory,inventory.csv,库存表\nsuppliers,suppliers.csv,供应商表\ntransport_records,transport_records.csv,运输记录表\nloss_records,loss_records.csv,损耗记录表\nalerts,alerts.csv,预警表\nchange_logs,change_logs.csv,变更日志表\n\n请确保 CSV 文件第一行为列名（与数据库字段名相同），例如 projects.csv 需包含 id,name,short_name,location,stage,progress,manager,workers,building_area,type";
+            downloadFile(csvContent, 'csv_template_guide.txt', 'text/plain');
+        }
+
+        function downloadFile(content, fileName, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        // ==================== ECharts 渲染辅助 ====================
+        function renderChart(containerId, option) {
+            const el = document.getElementById(containerId);
+            if (!el) return;
+            if (charts[containerId]) {
+                charts[containerId].dispose();
+            }
+            const chart = echarts.init(el);
+            chart.setOption(option);
+            charts[containerId] = chart;
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        // ==================== AI 助手控制 ====================
+        function toggleAIChat() {
+            const panel = document.getElementById('aiChatPanel');
+            if (!panel) {
+                console.error('AI面板元素不存在');
+                return;
+            }
+            panel.classList.toggle('active');
+            if (panel.classList.contains('active')) {
+                if (!aiPanelInitialized) {
+                    initAIPanel();
+                }
+                const input = document.getElementById('aiInput');
+                if (input) input.focus();
+            }
+        }
+
+        // ==================== AI 悬浮按钮拖动 ====================
+        (function() {
+            const fab = document.getElementById('aiFab');
+            if (!fab) return;
+
+            let isDragging = false;
+            let startMouseX, startMouseY, startFabLeft, startFabTop;
+            let moved = false;
+
+            fab.addEventListener('mousedown', function(e) {
+                if (e.button !== 0) return;
+                e.preventDefault();
+
+                const rect = fab.getBoundingClientRect();
+                const computedStyle = window.getComputedStyle(fab);
+                const currentRight = parseFloat(computedStyle.right);
+                const currentBottom = parseFloat(computedStyle.bottom);
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+                const fabWidth = rect.width;
+                const fabHeight = rect.height;
+
+                startFabLeft = windowWidth - currentRight - fabWidth;
+                startFabTop = windowHeight - currentBottom - fabHeight;
+
+                startMouseX = e.clientX;
+                startMouseY = e.clientY;
+                isDragging = false;
+                moved = false;
+
+                fab.style.left = startFabLeft + 'px';
+                fab.style.top = startFabTop + 'px';
+                fab.style.right = 'auto';
+                fab.style.bottom = 'auto';
+
+                function onMouseMove(ev) {
+                    const deltaX = ev.clientX - startMouseX;
+                    const deltaY = ev.clientY - startMouseY;
+
+                    if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+                        isDragging = true;
+                        moved = true;
+                        fab.classList.add('dragging');
+                    }
+
+                    if (isDragging) {
+                        const newLeft = Math.min(Math.max(startFabLeft + deltaX, 0), windowWidth - fabWidth);
+                        const newTop = Math.min(Math.max(startFabTop + deltaY, 0), windowHeight - fabHeight);
+                        fab.style.left = newLeft + 'px';
+                        fab.style.top = newTop + 'px';
+                    }
+                }
+
+                function onMouseUp() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    fab.classList.remove('dragging');
+
+                    if (!moved) {
+                        toggleAIChat();
+                    }
+                    isDragging = false;
+                    moved = false;
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+
+            fab.addEventListener('dragstart', function(e) { e.preventDefault(); });
+        })();
+
+        // 初始化AI面板事件（只在首次打开时执行一次）
+        function initAIPanel() {
+            if (aiPanelInitialized) return;
+            aiPanelInitialized = true;
+
+            console.log('[AI Panel] 开始初始化');
+            updateDebug('🔧 AI面板初始化中...');
+
+            const chatPanel = document.getElementById('aiChatPanel');
+            const chatHeader = document.getElementById('aiChatHeader');
+            const resizeHandle = document.getElementById('aiResizeHandle');
+            const maxBtn = document.getElementById('aiMaxBtn');
+            const minBtn = document.getElementById('aiMinBtn');
+
+            console.log('[AI Panel] 元素检查:', { chatPanel, chatHeader, resizeHandle, maxBtn, minBtn });
+
+            if (!chatPanel || !chatHeader || !resizeHandle || !maxBtn || !minBtn) {
+                console.error('[AI Panel] 元素缺失，无法绑定交互');
+                updateDebug('❌ AI面板元素缺失');
+                return;
+            }
+
+            // ---------- 拖动 ----------
+            let isDragging = false;
+            let startMouseX, startMouseY, startPanelLeft, startPanelTop;
+
+            chatHeader.addEventListener('mousedown', function(e) {
+                if (e.target.tagName === 'BUTTON') return;
+                e.preventDefault();
+                const rect = chatPanel.getBoundingClientRect();
+                startMouseX = e.clientX;
+                startMouseY = e.clientY;
+                startPanelLeft = rect.left;
+                startPanelTop = rect.top;
+
+                chatPanel.style.left = rect.left + 'px';
+                chatPanel.style.top = rect.top + 'px';
+                chatPanel.style.right = 'auto';
+                chatPanel.style.bottom = 'auto';
+
+                isDragging = true;
+                chatPanel.style.cursor = 'move';
+                console.log('[AI Panel] 开始拖动');
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                const deltaX = e.clientX - startMouseX;
+                const deltaY = e.clientY - startMouseY;
+
+                const newLeft = Math.min(Math.max(startPanelLeft + deltaX, 0), window.innerWidth - 50);
+                const newTop = Math.min(Math.max(startPanelTop + deltaY, 0), window.innerHeight - 50);
+
+                chatPanel.style.left = newLeft + 'px';
+                chatPanel.style.top = newTop + 'px';
+            });
+
+            document.addEventListener('mouseup', function() {
+                if (isDragging) {
+                    isDragging = false;
+                    chatPanel.style.cursor = 'default';
+                    console.log('[AI Panel] 拖动结束');
+                }
+            });
+
+            // ---------- 缩放 ----------
+            let isResizing = false;
+            let resizeStartX, resizeStartY, startWidth, startHeight;
+
+            resizeHandle.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                isResizing = true;
+                resizeStartX = e.clientX;
+                resizeStartY = e.clientY;
+                startWidth = chatPanel.offsetWidth;
+                startHeight = chatPanel.offsetHeight;
+                console.log('[AI Panel] 开始缩放');
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isResizing) return;
+                const newWidth = Math.min(Math.max(startWidth + (e.clientX - resizeStartX), 300), window.innerWidth * 0.9);
+                const newHeight = Math.min(Math.max(startHeight + (e.clientY - resizeStartY), 300), window.innerHeight * 0.8);
+                chatPanel.style.width = newWidth + 'px';
+                chatPanel.style.height = newHeight + 'px';
+            });
+
+            document.addEventListener('mouseup', function() {
+                if (isResizing) {
+                    isResizing = false;
+                    console.log('[AI Panel] 缩放结束');
+                }
+            });
+
+            // ---------- 最大化/还原 ----------
+            let isMaximized = false;
+            let prevRect = null;
+
+            maxBtn.addEventListener('click', function() {
+                if (!isMaximized) {
+                    const rect = chatPanel.getBoundingClientRect();
+                    prevRect = {
+                        left: rect.left + 'px',
+                        top: rect.top + 'px',
+                        width: rect.width + 'px',
+                        height: rect.height + 'px'
+                    };
+                    chatPanel.style.left = '2%';
+                    chatPanel.style.top = '2%';
+                    chatPanel.style.right = 'auto';
+                    chatPanel.style.bottom = 'auto';
+                    chatPanel.style.width = '96%';
+                    chatPanel.style.height = '92vh';
+                    isMaximized = true;
+                    maxBtn.textContent = '🗗';
+                } else {
+                    if (prevRect) {
+                        chatPanel.style.left = prevRect.left;
+                        chatPanel.style.top = prevRect.top;
+                        chatPanel.style.width = prevRect.width;
+                        chatPanel.style.height = prevRect.height;
+                        chatPanel.style.right = 'auto';
+                        chatPanel.style.bottom = 'auto';
+                    }
+                    isMaximized = false;
+                    maxBtn.textContent = '🗖';
+                }
+            });
+
+            // ---------- 最小化（收起面板） ----------
+            minBtn.addEventListener('click', function() {
+                toggleAIChat();
+            });
+
+            updateDebug('✅ AI面板交互已就绪');
+            console.log('[AI Panel] 初始化完成');
+
+            showAIStartupMessage();
+        }
+
+        // 显示AI启动加载消息（视觉反馈）
+        function showAIStartupMessage() {
+            const container = document.getElementById('aiMessages');
+            if (!container) return;
+            container.innerHTML = '';
+            const loadMsg = document.createElement('div');
+            loadMsg.className = 'ai-message bot';
+            loadMsg.innerHTML = `
+                <div class="ai-thinking-status"><span class="spinner"></span> AI 助手启动中...</div>
+                <div class="ai-thinking-progress"><div class="progress-bar" style="width:0%"></div></div>
+            `;
+            container.appendChild(loadMsg);
+            container.scrollTop = container.scrollHeight;
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 20;
+                if (progress > 100) progress = 100;
+                const bar = loadMsg.querySelector('.progress-bar');
+                if (bar) bar.style.width = progress + '%';
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    loadMsg.innerHTML = '✅ AI 助手已就绪，请提问';
+                    setTimeout(() => {
+                        container.innerHTML = `
+                            <div class="ai-message bot">
+                                你好！我是物料调度 AI 助手，你可以问我：<br>
+                                · “预测项目X未来7天混凝土需求”<br>
+                                · “评估一下混凝土供应商”<br>
+                                · “生成混凝土运输方案”<br>
+                                <div class="ai-quick-actions">
+                                    <button onclick="sendAIMessage('预测项目X未来7天混凝土需求')">📈 预测需求</button>
+                                    <button onclick="sendAIMessage('评估混凝土供应商')">🏆 评估供应商</button>
+                                    <button onclick="sendAIMessage('生成混凝土运输方案')">🚚 物流方案</button>
+                                </div>
+                            </div>
+                        `;
+                        container.scrollTop = container.scrollHeight;
+                    }, 500);
+                }
+            }, 200);
+        }
+
+        // 清除会话
+        function clearAISession() {
+            localStorage.removeItem('aiSessionId');
+            aiSessionId = null;
+            const container = document.getElementById('aiMessages');
+            if (container) {
+                container.innerHTML = `
+                    <div class="ai-message bot">
+                        会话已清除，有什么可以帮助您的吗？<br>
+                        <div class="ai-quick-actions">
+                            <button onclick="sendAIMessage('预测项目X未来7天混凝土需求')">📈 预测需求</button>
+                            <button onclick="sendAIMessage('评估混凝土供应商')">🏆 评估供应商</button>
+                            <button onclick="sendAIMessage('生成混凝土运输方案')">🚚 物流方案</button>
+                        </div>
+                    </div>
+                `;
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        // 发送消息（真实请求，移除固定延迟）
+        async function sendAIMessage(message) {
+            if (aiRequestInProgress) return;
+            const input = document.getElementById('aiInput');
+            const msg = message || input.value.trim();
+            if (!msg) return;
+
+            aiRequestInProgress = true;
+            const sendBtn = document.querySelector('.ai-chat-input button');
+            sendBtn.disabled = true;
+            sendBtn.textContent = '...';
+
+            addAIMessage(msg, 'user');
+            if (!message) input.value = '';
+
+            const thinkingMsg = document.createElement('div');
+            thinkingMsg.className = 'ai-message bot';
+            thinkingMsg.innerHTML = `
+                <div class="ai-thinking-status"><span class="spinner"></span> 正在分析您的问题...</div>
+                <div class="ai-thinking-progress"><div class="progress-bar" style="width:0%"></div></div>
+            `;
+            document.getElementById('aiMessages').appendChild(thinkingMsg);
+            const msgsContainer = document.getElementById('aiMessages');
+            msgsContainer.scrollTop = msgsContainer.scrollHeight;
+
+            // 模拟处理步骤（动态更新，但不再固定总时长）
+            const steps = [
+                { text: '🔍 解析问题，识别关键实体...', progress: 30 },
+                { text: '🧠 调用 AI 模型进行推理...', progress: 60 },
+                { text: '📡 查询实时业务数据...', progress: 85 },
+                { text: '📊 整理结果，生成回复...', progress: 95 },
+            ];
+            let stepIndex = 0;
+            const stepInterval = setInterval(() => {
+                if (stepIndex < steps.length) {
+                    const step = steps[stepIndex];
+                    thinkingMsg.querySelector('.ai-thinking-status').innerHTML = `<span class="spinner"></span> ${step.text}`;
+                    thinkingMsg.querySelector('.progress-bar').style.width = step.progress + '%';
+                    stepIndex++;
+                    msgsContainer.scrollTop = msgsContainer.scrollHeight;
+                }
+            }, 500);
+
+            try {
+                const requestBody = { message: msg };
+                if (aiSessionId) requestBody.session_id = aiSessionId;
+
+                const res = await fetch('/api/ai_chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(requestBody)
+                });
+                const data = await res.json();
+
+                clearInterval(stepInterval);
+                thinkingMsg.remove();
+
+                if (data.session_id) {
+                    aiSessionId = data.session_id;
+                    localStorage.setItem('aiSessionId', aiSessionId);
+                }
+
+                // 渲染文本回复
+                if (data.reply) {
+                    addAIMessage(data.reply, 'bot');
+                }
+
+                // 渲染富文本卡片（如果有）
+                if (data.cards && data.cards.length) {
+                    data.cards.forEach(card => {
+                        const cardDiv = document.createElement('div');
+                        cardDiv.className = 'ai-message bot ai-card';
+                        cardDiv.innerHTML = `
+                            <strong>${card.title || ''}</strong><br>
+                            ${card.content || ''}<br>
+                            ${card.button ? `<button onclick="switchPage('${card.button.action}')">${card.button.text}</button>` : ''}
+                        `;
+                        document.getElementById('aiMessages').appendChild(cardDiv);
+                        msgsContainer.scrollTop = msgsContainer.scrollHeight;
+                    });
+                }
+
+                // 处理页面跳转 action
+                if (data.action) {
+                    if (data.action.page === 'predict') {
+                        switchPage('predict');
+                        if (data.action.project_id) document.getElementById('predictProject').value = data.action.project_id;
+                        if (data.action.material_id) document.getElementById('predictMaterial').value = data.action.material_id;
+                        if (data.action.days) document.getElementById('predictDays').value = data.action.days;
+                        runPredict();
+                    } else if (data.action.page === 'supplier') {
+                        switchPage('supplier');
+                        if (data.action.material_id) document.getElementById('supplierMaterial').value = data.action.material_id;
+                        runSupplierEval();
+                    } else if (data.action.page === 'transport') {
+                        switchPage('transport');
+                        if (data.action.material_id) document.getElementById('transportMaterial').value = data.action.material_id;
+                        runTransportPlan();
+                    } else {
+                        switchPage(data.action.page);
+                    }
+                }
+            } catch (error) {
+                clearInterval(stepInterval);
+                thinkingMsg.remove();
+                addAIMessage('⚠️ 抱歉，当前无法连接后端服务，请确认 API 是否已启动。<br>（演示模式：我已理解你的问题，但无法获取实时数据）', 'bot');
+            } finally {
+                aiRequestInProgress = false;
+                sendBtn.disabled = false;
+                sendBtn.textContent = '发送';
+            }
+        }
+
+        // 流式消息发送（备用，可根据需要启用）
+        async function sendStreamMessage(message) {
+            if (aiRequestInProgress) return;
+            aiRequestInProgress = true;
+            const sendBtn = document.querySelector('.ai-chat-input button');
+            sendBtn.disabled = true;
+            sendBtn.textContent = '...';
+
+            const container = document.getElementById('aiMessages');
+            const userMsg = document.createElement('div');
+            userMsg.className = 'ai-message user';
+            userMsg.innerHTML = message.replace(/\n/g, '<br>');
+            container.appendChild(userMsg);
+
+            const botMsg = document.createElement('div');
+            botMsg.className = 'ai-message bot';
+            container.appendChild(botMsg);
+            container.scrollTop = container.scrollHeight;
+
+            try {
+                const res = await fetch('/api/ai_chat_stream', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message})
+                });
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const {done, value} = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, {stream: true});
+                    const lines = buffer.split('\n\n');
+                    buffer = lines.pop();
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6);
+                            if (data === '[DONE]') continue;
+                            try {
+                                const parsed = JSON.parse(data);
+                                if (parsed.content) {
+                                    botMsg.innerHTML += parsed.content.replace(/\n/g, '<br>');
+                                    container.scrollTop = container.scrollHeight;
+                                }
+                                if (parsed.action) {
+                                    // 流式响应中处理 action（如有需要）
+                                }
+                            } catch(e) {}
+                        }
+                    }
+                }
+            } catch (error) {
+                botMsg.innerHTML = '⚠️ 流式通信出错，请稍后重试。';
+            } finally {
+                aiRequestInProgress = false;
+                sendBtn.disabled = false;
+                sendBtn.textContent = '发送';
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        function addAIMessage(text, sender) {
+            const container = document.getElementById('aiMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `ai-message ${sender}`;
+            msgDiv.innerHTML = text.replace(/\n/g, '<br>');
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // ==================== 初始化 ====================
+        async function init() {
+            console.log('开始加载页面数据...');
+            updateDebug('📡 正在加载仪表板数据...');
+            const projects = await apiFetch('/api/projects');
+            if (projects) {
+                document.getElementById('globalProjectSelect').innerHTML = projects.map(p => `<option value="${p.id}">${p.name} (${p.short_name})</option>`).join('');
+            }
+            loadDashboard();
+            updateDebug('✅ 页面数据加载完成');
+        }
+
+        // 事件绑定
+        document.getElementById('globalProjectSelect').addEventListener('change', function() {
+            loadDashboard();
+            if (currentPage === 'predict') runPredict();
+            if (currentPage === 'inventory') loadInventoryPage();
+            if (currentPage === 'loss') loadLossPage();
+        });
+
+        document.getElementById('notificationBtn').addEventListener('click', function() {
+            alert('📢 您有 3 条未读预警，请到驾驶舱查看详情。');
+        });
+
+        // 启动初始化
+        init();
+    </script>
+</body>
+</html>
