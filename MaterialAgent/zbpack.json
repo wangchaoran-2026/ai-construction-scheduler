@@ -1,0 +1,8 @@
+{
+  "framework": "python",
+  "python": {
+    "entry": "main.py",
+    "package_manager": "pip"
+  },
+  "start_command": "gunicorn main:app --bind 0.0.0.0:8000"
+}
