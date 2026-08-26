@@ -20,7 +20,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from openai import OpenAI
-
+from flask import Flask
+app = Flask(__name__)
 load_dotenv()
 
 # DeepSeek 客户端配置
